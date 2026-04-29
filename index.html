@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Expense Dashboard</title>
+ 
+<style>
+body{
+  margin:0;
+  font-family:"Segoe UI",sans-serif;
+  background:#0f172a;
+  color:#e5e7eb;
+  display:flex;
+  justify-content:center;
+}
+ 
+.app{
+  width:100%;
+  max-width:950px;
+  padding:20px;
+}
+ 
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:center;
+}
+ 
+/* NAV – CENTERED */
+.nav{
+  display:flex;
+  gap:10px;
+  margin:15px 0;
+  justify-content:center;
+}
+ 
+.nav button{
+  padding:8px 12px;
+  border-radius:8px;
+  background:#1f2937;
+  color:white;
+  border:none;
+  cursor:pointer;
+}
+ 
+.active{
+  background:#4f46e5 !important;
+}
+ 
+/* CARD */
+.card{
+  background:rgba(255,255,255,.05);
+  padding:16px;
+  border-radius:12px;
+  margin-top:12px;
+}
+ 
+/* ADD VIEW – CENTER CONTENT */
+#addView{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+ 
+/* INPUT */
+input{
+  width:60%;
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid #334155;
+  background:#0f172a;
+  color:white;
+  font-size:13px;
+}
+ 
+/* BUTTON */
+button{
+  background:#4f46e5;
+  border:none;
+  padding:8px 16px;
+  border-radius:8px;
+  color:white;
+  cursor:pointer;
+}
+ 
+/* CENTER ADD EXPENSE BUTTON */
+#addView button{
+  margin-top:8px;
+}
+ 
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+ 
+th,td{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  text-align:center;
+}
+ 
+td{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+ 
+/* VIEW SWITCH */
+.view{display:none;}
+.show{display:block;}
+ 
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:#4f46e5;
+  padding:10px 14px;
+  border-radius:8px;
+  opacity:0;
+  transition:.3s;
+  font-size:13px;
+}
+ 
+#toast.show{opacity:1;}
+</style>
+</head>
+ 
+<body>
+<div class="app">
+ 
+  <div class="header">
+    <h2>💰 Expense Dashboard</h2>
+  </div>
+ 
+  <div class="nav">
+    <button id="b1" class="active" onclick="showView('add')">➕ Add</button>
+    <button id="b2" onclick="showView('expenses')">📋 Expenses</button>
+    <button id="b3" onclick="showView('summary')">📊 Summary</button>
+  </div>
+ 
+  <!-- ADD -->
+  <div class="card view show" id="addView">
+    <input id="name" placeholder="Expense name">
+    <input id="category" list="cats" placeholder="Category">
+    <datalist id="cats">
+      <option value="Food">
+      <option value="Travel">
+      <option value="Bills">
+      <option value="Shopping">
+    </datalist>
+    <input id="amount" type="number" placeholder="Amount">
+    <input id="date" type="date">
+    <button onclick="addExpense()">Add Expense</button>
+  </div>
+ 
+  <!-- EXPENSE LIST -->
+  <div class="card view" id="expenseView">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Category</th>
+          <th>₹</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+ 
+  <!-- SUMMARY -->
+  <div class="card view" id="summaryView">
+    <h3>Monthly Summary</h3>
+    <div id="summaryText"></div>
+  </div>
+ 
+</div>
+ 
+<div id="toast"></div>
+ 
+<script>
+let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+let editIndex = -1;
+ 
+const nameEl = () => document.getElementById("name");
+const catEl = () => document.getElementById("category");
+const amtEl = () => document.getElementById("amount");
+const dateEl = () => document.getElementById("date");
+ 
+function save(){
+  localStorage.setItem("expenses",JSON.stringify(expenses));
+}
+ 
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.innerText=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+ 
+function addExpense(){
+  const name=nameEl().value.trim();
+  const category=catEl().value.trim();
+  const amount=amtEl().value;
+  const date=dateEl().value;
+ 
+  if(!name||!category||!date||amount<=0){
+    showToast("⚠️ Fill all valid fields");
+    return;
+  }
+ 
+  const data={name,category,amount:Number(amount),date};
+ 
+  if(editIndex===-1){
+    expenses.push(data);
+    showToast("✅ Expense added");
+  }else{
+    expenses[editIndex]=data;
+    editIndex=-1;
+    showToast("✏️ Expense updated");
+  }
+ 
+  save();
+  clear();
+  updateAll();
+}
+ 
+function editExpense(i){
+  const e=expenses[i];
+  nameEl().value=e.name;
+  catEl().value=e.category;
+  amtEl().value=e.amount;
+  dateEl().value=e.date;
+  editIndex=i;
+  showView("add");
+}
+ 
+function del(i){
+  expenses.splice(i,1);
+  save();
+  updateAll();
+  showToast("🗑 Expense deleted");
+}
+ 
+function showView(page){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("show"));
+  b1.classList.remove("active");
+  b2.classList.remove("active");
+  b3.classList.remove("active");
+ 
+  if(page==="add"){addView.classList.add("show");b1.classList.add("active");}
+  if(page==="expenses"){expenseView.classList.add("show");b2.classList.add("active");}
+  if(page==="summary"){summaryView.classList.add("show");b3.classList.add("active");summary();}
+}
+ 
+function render(){
+  list.innerHTML=expenses.map((e,i)=>`
+    <tr>
+      <td>${e.name}</td>
+      <td>${e.category}</td>
+      <td>₹${e.amount}</td>
+      <td>${e.date}</td>
+      <td>
+        <button onclick="editExpense(${i})">✏️</button>
+        <button onclick="del(${i})">🗑</button>
+      </td>
+    </tr>`).join("");
+}
+ 
+function summary(){
+  const now=new Date();
+  let total=0;
+  const map={};
+ 
+  expenses.forEach(e=>{
+    const d=new Date(e.date);
+    if(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()){
+      total+=e.amount;
+      map[e.category]=(map[e.category]||0)+e.amount;
+    }
+  });
+ 
+  let out=`<b>Total: ₹${total}</b><hr>`;
+  Object.entries(map).forEach(([k,v])=>{
+    out+=`${k}: ₹${v}<br>`;
+  });
+ 
+  summaryText.innerHTML=total?out:"No expenses this month";
+}
+ 
+function updateAll(){
+  render();
+  summary();
+}
+ 
+function clear(){
+  nameEl().value="";
+  catEl().value="";
+  amtEl().value="";
+  dateEl().value="";
+}
+ 
+render();
+summary();
+</script>
+ 
+</body>
+</html>
+ 

@@ -75,18 +75,18 @@ Expense-Dashboard/
 └── README.md
 
 #Backend Setup
-Create Virtual Environment
+Create Virtual Environment :
 python -m venv venv
 
-Activate Virtual Environment
+Activate Virtual Environment : 
 Windows
 venv\Scripts\activate
 
-Install Dependencies
+Install Dependencies : 
 pip install -r requirements.txt
 
-Run Backend Server
-cd backend
+Run Backend Server :
+cd backend : 
 uvicorn main:app --reload
 
 Backend will be available at:

@@ -6,43 +6,43 @@ This application demonstrates complete CRUD functionality for Users, Categories,
 The Expense Dashboard POC allows users to:
 
 Manage multiple users
-Create and manage expense categories
-Track daily expenses per user
-View monthly expense summaries with category‑wise breakdown
-Maintain structured backend APIs with a simple frontend dashboard
+Create and manage expense categories,
+Track daily expenses per user,
+View monthly expense summaries with category‑wise breakdown,
+Maintain structured backend APIs with a simple frontend dashboard.
 
 The goal of this project is to showcase end‑to‑end full‑stack development using FastAPI and Vanilla JavaScript.
 
 #Features
 1.User Management
-Create users
-Edit users
-Delete users
-Select an active user
+Create users,
+Edit users,
+Delete users,
+Select an active user.
 
 2.Category Management
-Create categories
-Edit categories
-Delete categories
-Restrict deletion of categories that are in use
+Create categories,
+Edit categories,
+Delete categories,
+Restrict deletion of categories that are in use.
 
 3.Expense Management
-Add expenses for an active user
-Edit expenses
-Delete expenses
-Validate expense amount, date, and category
+Add expenses for an active user,
+Edit expenses,
+Delete expenses,
+Validate expense amount, date, and category.
 
 4.Monthly Summary
-Select month and year
-View total monthly expenses
-View category‑wise expense totals
+Select month and year,
+View total monthly expenses,
+View category‑wise expense totals.
 
 5.UI & UX
-Single‑page dashboard
-Multiple views (Add Expense, Expenses, Summary, Users, Categories)
-Dark theme user interface
-Toast notifications for actions
-Responsive layout
+Single‑page dashboard,
+Multiple views (Add Expense, Expenses, Summary, Users, Categories),
+Dark theme user interface,
+Toast notifications for actions,
+Responsive layout.
 
 
 #Tech Stack

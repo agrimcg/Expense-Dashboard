@@ -1,167 +1,189 @@
-Expense Dashboard – Proof of Concept (POC)
-A full‑stack Expense Dashboard Proof of Concept (POC) built using FastAPI (Python) for the backend and HTML, CSS, and Vanilla JavaScript for the frontend.
-This application demonstrates complete CRUD functionality for Users, Categories, and Expenses, along with a Monthly Expense Summary view. The project focuses on clean architecture, practical implementation, and professional Git/GitHub practices.
+# Expense Dashboard
 
-#Overview
-The Expense Dashboard POC allows users to:
+A full-stack **expense tracker** proof of concept: **FastAPI** + **SQLAlchemy** + **SQLite** on the backend, and a single **HTML/CSS/JavaScript** dashboard (no build step). The API and UI are served from the same origin so you can open the app at `http://127.0.0.1:8000/` without CORS issues.
 
-Manage multiple users
-Create and manage expense categories,
-Track daily expenses per user,
-View monthly expense summaries with category‑wise breakdown,
-Maintain structured backend APIs with a simple frontend dashboard.
+---
 
-The goal of this project is to showcase end‑to‑end full‑stack development using FastAPI and Vanilla JavaScript.
+## Overview
 
-#Features
-1.User Management
-Create users,
-Edit users,
-Delete users,
-Select an active user.
+- **Users (profiles)** — name, email, phone; full CRUD; optional “active profile” shortcut in the header.
+- **Categories** — name and description; full CRUD; delete blocked while expenses reference a category.
+- **Expenses** — title, amount, date, category, optional **notes** and **payment method**; assign to **any** profile (not only the active one); list filter per profile; full CRUD including moving an expense to another user.
+- **Reports** — monthly category totals, yearly rollups, multi-year trends, and per-user comparisons; **Chart.js** (CDN) for charts. Scope: all users, active profile, or a single named profile.
 
-2.Category Management
-Create categories,
-Edit categories,
-Delete categories,
-Restrict deletion of categories that are in use.
+---
 
-3.Expense Management
-Add expenses for an active user,
-Edit expenses,
-Delete expenses,
-Validate expense amount, date, and category.
+## Features
 
-4.Monthly Summary
-Select month and year,
-View total monthly expenses,
-View category‑wise expense totals.
+| Area | Details |
+|------|---------|
+| **Users** | Create, read, update, delete; optional phone; select active profile for shortcuts. |
+| **Categories** | Create, read, update, delete; optional description; cannot delete if in use. |
+| **Expenses** | Create for any profile; edit/delete; validation on amount and date; notes & payment type. |
+| **Reports & charts** | Month picker + category table; spend by month (year); spend by profile (all-users scope) or **by category** (single-user scope); totals by calendar year over a configurable range. |
+| **UI** | Dark theme, responsive layout, loading indicator, toasts, empty states, skip link, `/docs` link. |
 
-5.UI & UX
-Single‑page dashboard,
-Multiple views (Add Expense, Expenses, Summary, Users, Categories),
-Dark theme user interface,
-Toast notifications for actions,
-Responsive layout.
+---
 
+## Tech stack
 
-#Tech Stack
-Backend
+| Layer | Stack |
+|-------|--------|
+| **Runtime** | Python **3.10+** recommended |
+| **API** | FastAPI, Pydantic v2 (`EmailStr` requires `email-validator`) |
+| **ORM / DB** | SQLAlchemy 2.x, SQLite (`expense_tracker.db` by default) |
+| **Server** | Uvicorn (`uvicorn[standard]`) |
+| **Tests** | pytest, httpx (FastAPI `TestClient`) |
+| **Frontend** | HTML5, CSS3, vanilla JS; **Chart.js** loaded from jsDelivr CDN |
 
-.Python 3.x
-.FastAPI
-.SQLAlchemy
-.SQLite
-.Uvicorn
+---
 
-Frontend
+## Project layout
 
-.HTML5
-.CSS3
-
-#Project structure
+```
 Expense-Dashboard/
-│
-├── main.py
-├── models.py
-├── schemas.py
-├── database.py
-├── index.html
-├── expense_tracker.db
+├── main.py              # FastAPI app, routes, startup DB migration hooks
+├── models.py            # SQLAlchemy models
+├── schemas.py           # Pydantic request/response models
+├── database.py          # Engine, session, SQLite PRAGMAs, ensure_columns()
+├── index.html           # Single-page dashboard (served at `/`)
+├── expense_tracker.db   # Default SQLite file (optional to gitignore)
 ├── requirements.txt
 ├── pytest.ini
 ├── .gitignore
 ├── tests/
-│   ├── conftest.py
-│   └── test_api.py
+│   ├── conftest.py      # In-memory DB + reset per test
+│   └── test_api.py      # API integration tests
 └── README.md
+```
 
-#Backend Setup
-Create Virtual Environment :
+---
+
+## Setup
+
+### 1. Virtual environment
+
+```bash
 python -m venv venv
+```
 
-Activate Virtual Environment : 
-Windows
-venv\Scripts\activate
+Activate:
 
-Install Dependencies : 
+- **Windows:** `venv\Scripts\activate`
+- **macOS / Linux:** `source venv/bin/activate`
+
+### 2. Install dependencies
+
+```bash
 pip install -r requirements.txt
+```
 
-Run Backend Server (serves the API and the dashboard at `/`):
+### 3. Run the server
 
+```bash
 uvicorn main:app --reload
+```
 
-Application and API base URL:
-http://127.0.0.1:8000
+| URL | Purpose |
+|-----|---------|
+| `http://127.0.0.1:8000/` | Dashboard (same origin as API) |
+| `http://127.0.0.1:8000/docs` | OpenAPI (Swagger UI) |
+| `http://127.0.0.1:8000/health` | Liveness JSON `{"status":"ok"}` |
 
-Swagger API documentation:
-http://127.0.0.1:8000/docs
+**Important:** open the dashboard via the server URL above. Opening `index.html` as a `file://` page will usually break API calls (CORS / security).
 
-Open the dashboard in the browser at `http://127.0.0.1:8000/` (same origin as the API). Opening `index.html` directly as a `file://` page will block API calls in most browsers.
+### 4. Optional: custom database URL
 
-#Tests
-API integration tests use `pytest` and an isolated in-memory SQLite database (`EXPENSE_DB_URL` is set in `tests/conftest.py`; the app uses `StaticPool` so in-memory SQLite works across threads).
+Set **`EXPENSE_DB_URL`** before import (used by tests and optional local overrides), for example:
 
-Run:
+```bash
+export EXPENSE_DB_URL="sqlite:////absolute/path/to/custom.db"
+uvicorn main:app --reload
+```
 
+Tests set `EXPENSE_DB_URL` to an in-memory database in `tests/conftest.py`.
+
+---
+
+## Tests
+
+```bash
 pytest
+```
 
-In the app, open **Reports** and use **Scope**: **All users (combined)**, **Active profile (header)**, or **Only: &lt;name&gt;** for any profile. The category table, monthly bar chart, and multi-year line chart all follow that scope; with a single profile selected, the second chart switches to **categories for that profile** for the chart year. The “by profile” comparison chart appears only when scope is **All users**.
+Integration tests hit the real FastAPI app with an **isolated in-memory** SQLite database (`StaticPool` so SQLite `:memory:` works across threads).
 
-API Endpoints
-Users
-POST    /users
-GET     /users
-GET     /users/{user_id}
-PUT     /users/{user_id}
-DELETE  /users/{user_id}
+---
 
-Categories
-POST    /categories
-GET     /categories
-GET     /categories/{category_id}
-PUT     /categories/{category_id}
-DELETE  /categories/{category_id}
+## API reference
 
-Expenses
-POST    /expenses
-GET     /expenses?user_id={id}
-GET     /expenses/{expense_id}
-PUT     /expenses/{expense_id}   (optional: user_id to move expense to another profile)
-DELETE  /expenses/{expense_id}
+### Users
 
-Monthly summary (category breakdown for one calendar month)
-GET /expenses/summary/monthly?year=&month=
-    Optional: user_id — omit to aggregate across all profiles.
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/users` | Create user |
+| `GET` | `/users` | List users |
+| `GET` | `/users/{user_id}` | Get one user |
+| `PUT` | `/users/{user_id}` | Update user |
+| `DELETE` | `/users/{user_id}` | Delete user (cascades expenses) |
 
-Reports (for dashboards & charts)
-GET /reports/summary/year?year=&user_id=
-    Full-year total, category breakdown, and per-month totals (12 points). Omit user_id for all users.
+### Categories
 
-GET /reports/timeseries/years?from_year=&to_year=&user_id=
-    One total per calendar year in the inclusive range. Omit user_id for all users.
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/categories` | Create category |
+| `GET` | `/categories` | List categories |
+| `GET` | `/categories/{category_id}` | Get one category |
+| `PUT` | `/categories/{category_id}` | Update category |
+| `DELETE` | `/categories/{category_id}` | Delete (400 if referenced by expenses) |
 
-GET /reports/by-user?year=&month=
-    Spend per profile: month omitted = entire year; month=1–12 = that month only. Always lists every user (0 if no spend).
+### Expenses
 
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/expenses` | Create expense |
+| `GET` | `/expenses?user_id=` | List expenses for a user (includes `notes`, `payment_method`) |
+| `GET` | `/expenses/{expense_id}` | Get one expense |
+| `PUT` | `/expenses/{expense_id}` | Update (optional `user_id` to reassign owner) |
+| `DELETE` | `/expenses/{expense_id}` | Delete expense |
 
-#Data Models
-User
+### Summaries & reports
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/expenses/summary/monthly` | Query: `year`, `month`; optional `user_id` (omit = all users) |
+| `GET` | `/reports/summary/year` | Query: `year`; optional `user_id` — totals, category breakdown, 12 monthly points |
+| `GET` | `/reports/timeseries/years` | Query: `from_year`, `to_year`; optional `user_id` |
+| `GET` | `/reports/by-user` | Query: `year`; optional `month` (1–12) — spend per profile |
+
+---
+
+## Data shapes (JSON)
+
+**User**
+
+```json
 {
   "id": 1,
   "name": "User Name",
   "email": "user@example.com",
   "phone": ""
 }
+```
 
-Category
+**Category**
+
+```json
 {
   "id": 1,
   "name": "Food",
   "description": ""
 }
+```
 
-Expense
+**Expense**
+
+```json
 {
   "id": 101,
   "user_id": 1,
@@ -172,37 +194,46 @@ Expense
   "notes": "",
   "payment_method": ""
 }
+```
 
-#Validations & Rules
+---
 
-Expense amount must be greater than zero
-Expense date is mandatory
-Categories in use cannot be deleted
-Confirmation is required before delete actions
+## Rules & validation
 
+- Expense **amount** must be greater than zero.
+- Expense **date** is required; new expenses cannot be future-dated in the UI (editing may allow correcting legacy rows).
+- **Duplicate** user emails and category names are rejected where applicable.
+- **Categories** in use cannot be deleted.
+- Destructive actions in the UI use **confirm** dialogs.
 
-#Limitations (POC Scope)
+---
 
-No authentication or authorization
-No role‑based access control
-API tests via `pytest` (see Tests above)
-Not production‑hardened
+## Limitations (POC)
 
+- No authentication or authorization.
+- No role-based access control.
+- Charts depend on a **CDN**; offline or strict CSP may block Chart.js.
+- Not hardened for production (logging, rate limits, HTTPS termination, etc.).
 
-#Future Enhancements
+---
 
-User authentication using JWT
-Backend‑driven frontend state
-Charts and analytics
-Export reports (CSV / PDF)
-React or Angular frontend
-Dockerized deployment
-Unit and integration tests
+## Future ideas
 
+- JWT or session-based auth.
+- Export CSV/PDF.
+- Richer analytics (budgets, tags).
+- Docker image and CI pipeline.
+- Optional React/Vue frontend while keeping the same API.
 
-Author
-Expense Dashboard – Proof of Concept
-Developed as a full‑stack POC using FastAPI and Vanilla JavaScript, focusing on clean design, maintainable code, and professional GitHub practices.
+---
 
-Vanilla JavaScript
+## Contributing & Git
 
+- Use the provided **`.gitignore`** for venvs, caches, and local env files.
+- Uncomment ignoring **`expense_tracker.db`** in `.gitignore` if you do not want to commit a local database.
+
+---
+
+## License / author
+
+Expense Dashboard — proof of concept built with **FastAPI** and **vanilla JavaScript** for learning and demos.

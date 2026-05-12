@@ -62,16 +62,18 @@ Frontend
 #Project structure
 Expense-Dashboard/
 │
-├── backend/
-│   ├── main.py
-│   ├── models.py
-│   ├── schemas.py
-│   └── database.py
-│
-├── frontend/
-│   └── index.html
-│
+├── main.py
+├── models.py
+├── schemas.py
+├── database.py
+├── index.html
+├── expense_tracker.db
 ├── requirements.txt
+├── pytest.ini
+├── .gitignore
+├── tests/
+│   ├── conftest.py
+│   └── test_api.py
 └── README.md
 
 #Backend Setup
@@ -85,42 +87,62 @@ venv\Scripts\activate
 Install Dependencies : 
 pip install -r requirements.txt
 
-Run Backend Server :
-cd backend : 
+Run Backend Server (serves the API and the dashboard at `/`):
+
 uvicorn main:app --reload
 
-Backend will be available at:
+Application and API base URL:
 http://127.0.0.1:8000
 
 Swagger API documentation:
 http://127.0.0.1:8000/docs
 
+Open the dashboard in the browser at `http://127.0.0.1:8000/` (same origin as the API). Opening `index.html` directly as a `file://` page will block API calls in most browsers.
 
-#Frontend Setup
+#Tests
+API integration tests use `pytest` and an isolated in-memory SQLite database (`EXPENSE_DB_URL` is set in `tests/conftest.py`; the app uses `StaticPool` so in-memory SQLite works across threads).
 
-Navigate to the frontend directory
-Open index.html in a browser (Chrome or Edge recommended)
+Run:
 
-No frontend server or build setup is required for this POC.
+pytest
+
+In the app, open **Reports** and use **Scope**: **All users (combined)**, **Active profile (header)**, or **Only: &lt;name&gt;** for any profile. The category table, monthly bar chart, and multi-year line chart all follow that scope; with a single profile selected, the second chart switches to **categories for that profile** for the chart year. The “by profile” comparison chart appears only when scope is **All users**.
 
 API Endpoints
 Users
 POST    /users
 GET     /users
+GET     /users/{user_id}
+PUT     /users/{user_id}
 DELETE  /users/{user_id}
 
 Categories
 POST    /categories
 GET     /categories
+GET     /categories/{category_id}
+PUT     /categories/{category_id}
 DELETE  /categories/{category_id}
 
 Expenses
 POST    /expenses
 GET     /expenses?user_id={id}
+GET     /expenses/{expense_id}
+PUT     /expenses/{expense_id}   (optional: user_id to move expense to another profile)
 DELETE  /expenses/{expense_id}
 
-Monthly Summary
-GET /expenses/summary/monthly?user_id=&year=&month=
+Monthly summary (category breakdown for one calendar month)
+GET /expenses/summary/monthly?year=&month=
+    Optional: user_id — omit to aggregate across all profiles.
+
+Reports (for dashboards & charts)
+GET /reports/summary/year?year=&user_id=
+    Full-year total, category breakdown, and per-month totals (12 points). Omit user_id for all users.
+
+GET /reports/timeseries/years?from_year=&to_year=&user_id=
+    One total per calendar year in the inclusive range. Omit user_id for all users.
+
+GET /reports/by-user?year=&month=
+    Spend per profile: month omitted = entire year; month=1–12 = that month only. Always lists every user (0 if no spend).
 
 
 #Data Models
@@ -128,28 +150,31 @@ User
 {
   "id": 1,
   "name": "User Name",
-  "email": "user@example.com"
+  "email": "user@example.com",
+  "phone": ""
 }
 
 Category
 {
   "id": 1,
-  "name": "Food"
+  "name": "Food",
+  "description": ""
 }
 
 Expense
 {
   "id": 101,
-  "userId": 1,
+  "user_id": 1,
+  "category_id": 2,
   "name": "Lunch",
-  "category": "Food",
   "amount": 250,
-  "date": "2024-04-15"
+  "expense_date": "2024-04-15",
+  "notes": "",
+  "payment_method": ""
 }
 
 #Validations & Rules
 
-An active user must be selected before adding expenses
 Expense amount must be greater than zero
 Expense date is mandatory
 Categories in use cannot be deleted
@@ -160,7 +185,7 @@ Confirmation is required before delete actions
 
 No authentication or authorization
 No role‑based access control
-No automated test coverage
+API tests via `pytest` (see Tests above)
 Not production‑hardened
 
 
